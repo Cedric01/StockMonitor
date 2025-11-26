@@ -1,0 +1,71 @@
+# Visual Studio / .NET / common
+.vs/
+.vscode/
+_ReSharper*/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
+out/
+artifacts/
+TestResults/
+
+# NuGet
+packages/
+*.nupkg
+.nuget/packages/
+
+# MSBuild binary logs
+*.binlog
+
+# Rider
+.idea/
+*.sln.iml
+
+# Rider / JetBrains caches
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Publish / deployment
+publish/
+*.Publish.xml
+
+# Entity Framework / tooling
+*.dbmdl
+*.dbproj.user
+
+# ASP.NET / IIS
+*.vsix
+node_modules/
+wwwroot/lib/
+
+# Test & coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# Logs
+*.log
+logs/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Secrets / local config
+appsettings.*.json
+secrets.json
+*.usersecrets
+
+# Visual Studio Code settings
+.vscode/*
+
+# Ignore any generated files you don't want tracked - example:
+# /Generated/

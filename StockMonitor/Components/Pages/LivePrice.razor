@@ -1,0 +1,59 @@
+﻿@page "/live"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Nav
+
+<h3>Live Prices</h3>
+<p>DEBUG: @_prices?.Count</p>
+
+@if (_prices == null)
+{
+    <p>Loading...</p>
+}
+else if (_prices.Count == 0)
+{
+    <p>No prices received yet...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kv in _prices)
+            {
+                <tr>
+                    <td>@kv.Key</td>
+                    <td>@kv.Value</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private HubConnection? _hubConnection;
+    Dictionary<string, decimal>? _prices;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(Nav.ToAbsoluteUri("/markethub"))
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hubConnection.On<Dictionary<string, decimal>>("ReceivePrices", prices =>
+        {
+            Console.WriteLine("Got prices update!");
+            _prices = prices;
+
+            InvokeAsync(StateHasChanged);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+}

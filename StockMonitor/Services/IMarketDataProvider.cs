@@ -2,5 +2,5 @@
 
 public interface IMarketDataProvider
 {
-    Task<decimal?> GetCurrentPriceAsync(string symbol);
+    Task<decimal?> GetPriceAsync(string symbol);
 }

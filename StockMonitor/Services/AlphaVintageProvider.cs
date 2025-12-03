@@ -1,48 +1,53 @@
-﻿using StockMonitor.Models;
-using System;
-using System.Globalization;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json.Serialization;
-
-namespace StockMonitor.Services;
+﻿using StockMonitor.Services;
+using System.Text.Json;
 
 public class AlphaVantageProvider : IMarketDataProvider
 {
-    private readonly HttpClient _http;
+    private readonly HttpClient _httpClient;
     private readonly string _apiKey;
 
-    public AlphaVantageProvider(HttpClient http, IConfiguration config)
+    public AlphaVantageProvider(HttpClient httpClient, IConfiguration config)
     {
-        _http = http ?? throw new ArgumentNullException(nameof(http));
-        _apiKey = config?["AlphaVantage:ApiKey"] ?? throw new ArgumentException("Missing AlphaVantage:ApiKey", nameof(config));
+        _httpClient = httpClient;
+        _apiKey = config["AlphaVantage:ApiKey"];
     }
 
-    public async Task<decimal?> GetCurrentPriceAsync(string symbol)
+    public async Task<decimal?> GetPriceAsync(string symbol)
     {
-        if (string.IsNullOrWhiteSpace(symbol))
-            throw new ArgumentException("Symbol must be provided.", nameof(symbol));
+        var url = $"query?function=TIME_SERIES_DAILY&symbol={symbol}&apikey={_apiKey}&outputsize=compact";
 
-        var url = $"query?function=GLOBAL_QUOTE&symbol={Uri.EscapeDataString(symbol)}&apikey={_apiKey}";
+        var json = await _httpClient.GetStringAsync(url);
 
-        AlphaVantageResponse? response;
-        try
-        {
-            response = await _http.GetFromJsonAsync<AlphaVantageResponse>(url);
-        }
-        catch (HttpRequestException)
-        {
+        Console.WriteLine($"RAW JSON ({symbol}): {json}");
+
+        using var doc = JsonDocument.Parse(json);
+
+        // The JSON structure is:
+        // {
+        //   "Time Series (Daily)": {
+        //        "2024-01-03": {
+        //            "1. open": "144.23",
+        //            "2. high": "146.00",
+        //            "3. low": "143.95",
+        //            "4. close": "145.32",
+        //            "5. volume": "31232100"
+        //        },
+        //        ...
+        //   }
+        // }
+
+        if (!doc.RootElement.TryGetProperty("Time Series (Daily)", out var series))
             return null;
-        }
-        catch (NotSupportedException)
+
+        // First entry = most recent trading day
+        var latest = series.EnumerateObject().FirstOrDefault();
+
+        if (latest.Value.TryGetProperty("4. close", out var closeNode))
         {
-            return null;
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return null;
+            if (decimal.TryParse(closeNode.GetString(), out var closePrice))
+                return closePrice;
         }
 
-        return response?.GlobalQuote?.Price;
+        return null;
     }
 }

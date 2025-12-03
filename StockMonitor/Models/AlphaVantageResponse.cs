@@ -2,4 +2,5 @@
 
 public class AlphaVantageResponse
 {
+    public GlobalQuote? GlobalQuote { get; set; }
 }
